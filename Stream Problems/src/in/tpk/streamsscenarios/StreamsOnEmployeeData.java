@@ -1,0 +1,106 @@
+package in.tpk.streamsscenarios;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+record EmployeeDto(String name, String department, int age, String gender) {
+}
+
+public class StreamsOnEmployeeData {
+
+	public static void main(String[] args) {
+
+		EmployeeDto employee1 = new EmployeeDto("SRK", "ECE", 31, "Male");
+		EmployeeDto employee2 = new EmployeeDto("Salman", "CS", 44, "Male");
+		EmployeeDto employee3 = new EmployeeDto("Katrina", "ECE", 21, "Female");
+		EmployeeDto employee4 = new EmployeeDto("Kareena", "CS", 34, "Female");
+		EmployeeDto employee5 = new EmployeeDto("Hrithik", "EEE", 30, "Male");
+		EmployeeDto employee6 = new EmployeeDto("Aish", "EEE", 25, "Female");
+		List<EmployeeDto> list = new ArrayList<>();
+		list.add(employee1);
+		list.add(employee2);
+		list.add(employee3);
+		list.add(employee4);
+		list.add(employee5);
+		list.add(employee6);
+
+		// 1.Find the names of all EmployeeDtos in the CS department, sorted by age in
+		// descending order.
+		List<EmployeeDto> list2 = list.stream().filter(i -> i.department() == "CS")
+				.sorted(Comparator.comparingInt(EmployeeDto::age).reversed()).toList();
+
+		System.out.println(list2);
+
+		// 2. Group Employees by department and count how many Employees are in each
+		// department.
+
+		Map<String, Long> collect = list.stream()
+				.collect(Collectors.groupingBy((EmployeeDto::department), Collectors.counting()));
+		System.out.println("Count of Employees by department : " + collect);
+
+		// 3.Find the youngest female Employee.
+		String name = list.stream().filter(i -> i.gender() == "Female").min(Comparator.comparingInt(EmployeeDto::age))
+				.get().name();
+		System.out.println("Youngest Female employee name :" + name);
+
+		// 4. Create a map of department -> list of Employee names.
+
+		Map<String, List<String>> map = list.stream().collect(Collectors.groupingBy((EmployeeDto::department),
+				Collectors.mapping(EmployeeDto::name, Collectors.toList())));
+		System.out.println("map of department -> list of Employee names : " + map);
+
+		// 5. Find the average age of EmployeeDtos in each department.
+
+		Map<String, Double> collect2 = list.stream()
+				.collect(Collectors.groupingBy((EmployeeDto::department), Collectors.averagingInt(EmployeeDto::age)));
+		System.out.println("Average age by Department :" + collect2);
+
+		// 6. Get a list of unique departments Employees belong to
+
+		HashSet<String> hs = new HashSet<>();
+		List<String> list3 = list.stream().filter(e -> hs.add(e.department())).map(e -> e.department()).toList();
+		System.out.println("Unique Departments : " + list3);
+
+		// 7. Partition Employees into male and female groups, then list their names
+
+		Map<String, List<String>> collect3 = list.stream().collect(Collectors.groupingBy(e -> {
+			if (e.gender() == "Female") {
+				return "Female";
+			} else if (e.gender() == "Male") {
+				return "Male";
+			}
+			return "";
+		}, Collectors.mapping(e -> e.name(), Collectors.toList())));
+		System.out.println(collect3);
+
+		// 8. Group employees by department, then within each department find the oldest
+		// employee
+
+		Map<String, Optional<EmployeeDto>> collect4 = list.stream().collect(Collectors
+				.groupingBy((EmployeeDto::department), Collectors.maxBy(Comparator.comparingInt(EmployeeDto::age))));
+		System.out.println(collect4);
+
+		// 9. Build a map of gender with average age of employees sorted by average age
+		// descending
+  
+		Map<String, Double> mapOfGender = list.stream()
+				.collect(Collectors.groupingBy(EmployeeDto::gender, Collectors.averagingDouble(EmployeeDto::age)));
+		System.out.println("Map of Gender: " + mapOfGender);
+
+		// 10. For each department, find the youngest employee, but instead of returning
+		// the employee object, return only their name in upperCase.
+		Map<String, String> youngestByDept = list.stream()
+				.collect(Collectors.groupingBy(EmployeeDto::department,
+						Collectors.collectingAndThen(Collectors.minBy(Comparator.comparingInt(EmployeeDto::age)),
+								e -> e.get().name().toUpperCase())));
+
+		System.out.println("Youngest by Dept: " + youngestByDept);
+
+	}
+
+}
